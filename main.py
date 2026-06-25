@@ -32,6 +32,44 @@ BULLISH_WORDS = ["surge", "rally", "bullish", "gain", "rise", "soar", "pump",
 BEARISH_WORDS = ["crash", "drop", "bearish", "fall", "plunge", "dump", "ban",
                  "lawsuit", "hack", "scam", "fear", "loss", "decline", "sell-off"]
 
+# ===== Tag Map (keyword → hashtags) =====
+TAG_MAP = {
+    "bitcoin":        ["#Bitcoin", "#BTC", "#ارز_دیجیتال", "#کریپتو"],
+    "btc":            ["#Bitcoin", "#BTC", "#ارز_دیجیتال", "#کریپتو"],
+    "ethereum":       ["#Ethereum", "#ETH", "#ارز_دیجیتال", "#کریپتو"],
+    "eth":            ["#Ethereum", "#ETH", "#ارز_دیجیتال", "#کریپتو"],
+    "binance":        ["#Binance", "#BNB", "#صرافی", "#کریپتو"],
+    "bnb":            ["#BNB", "#Binance", "#صرافی", "#کریپتو"],
+    "ripple":         ["#Ripple", "#XRP", "#ارز_دیجیتال", "#کریپتو"],
+    "xrp":            ["#XRP", "#Ripple", "#ارز_دیجیتال", "#کریپتو"],
+    "solana":         ["#Solana", "#SOL", "#ارز_دیجیتال", "#کریپتو"],
+    "sol":            ["#SOL", "#Solana", "#ارز_دیجیتال", "#کریپتو"],
+    "coinbase":       ["#Coinbase", "#صرافی", "#کریپتو", "#ارز_دیجیتال"],
+    "grayscale":      ["#Grayscale", "#Bitcoin", "#ETF", "#کریپتو"],
+    "sec":            ["#SEC", "#قانون_گذاری", "#کریپتو", "#ارز_دیجیتال"],
+    "etf":            ["#ETF", "#Bitcoin", "#سرمایه_گذاری", "#کریپتو"],
+    "defi":           ["#DeFi", "#امورمالی_غیرمتمرکز", "#Ethereum", "#کریپتو"],
+    "nft":            ["#NFT", "#توکن_غیرمثلی", "#Ethereum", "#کریپتو"],
+    "web3":           ["#Web3", "#بلاکچین", "#کریپتو", "#ارز_دیجیتال"],
+    "blockchain":     ["#بلاکچین", "#Blockchain", "#کریپتو", "#ارز_دیجیتال"],
+    "usdt":           ["#USDT", "#Tether", "#استیبل_کوین", "#کریپتو"],
+    "stablecoin":     ["#استیبل_کوین", "#USDT", "#کریپتو", "#ارز_دیجیتال"],
+    "halving":        ["#هاوینگ", "#Bitcoin", "#BTC", "#کریپتو"],
+    "mining":         ["#ماینینگ", "#Mining", "#Bitcoin", "#کریپتو"],
+    "regulation":     ["#قانون_گذاری", "#کریپتو", "#SEC", "#ارز_دیجیتال"],
+    "hack":           ["#هک", "#امنیت", "#کریپتو", "#ارز_دیجیتال"],
+    "altcoin":        ["#آلت_کوین", "#Altcoin", "#کریپتو", "#ارز_دیجیتال"],
+    "crypto":         ["#کریپتو", "#ارز_دیجیتال", "#Crypto", "#بلاکچین"],
+    "cryptocurrency": ["#ارز_دیجیتال", "#کریپتو", "#Crypto", "#بلاکچین"],
+    "exchange":       ["#صرافی", "#Exchange", "#کریپتو", "#ارز_دیجیتال"],
+    "wallet":         ["#کیف_پول", "#Wallet", "#کریپتو", "#ارز_دیجیتال"],
+    "bullish":        ["#صعودی", "#Bullish", "#کریپتو", "#بازار"],
+    "bearish":        ["#نزولی", "#Bearish", "#کریپتو", "#بازار"],
+    "surge":          ["#صعودی", "#رشد", "#کریپتو", "#بازار"],
+    "crash":          ["#نزولی", "#سقوط", "#کریپتو", "#بازار"],
+    "etf approval":   ["#ETF", "#Bitcoin", "#SEC", "#سرمایه_گذاری"],
+}
+
 POSTED_FILE = "posted_urls.json"
 MAX_SUMMARY_LENGTH = 200
 
@@ -63,6 +101,26 @@ def get_sentiment_emoji(title):
     if bearish and not bullish:
         return "🔴"
     return "⚪️"
+
+def get_tags(title, summary=""):
+    """Pick top 5 unique hashtags based on title and summary keywords."""
+    text = (title + " " + summary).lower()
+    collected = []
+    seen = set()
+
+    for keyword, tags in TAG_MAP.items():
+        if keyword in text:
+            for tag in tags:
+                if tag not in seen:
+                    seen.add(tag)
+                    collected.append(tag)
+
+    # Always include #کریپتو and #ارز_دیجیتال as fallback
+    for fallback in ["#کریپتو", "#ارز_دیجیتال"]:
+        if fallback not in seen:
+            collected.append(fallback)
+
+    return collected[:5]
 
 def translate(text):
     if not text:
@@ -128,6 +186,9 @@ def fetch_news():
 
 def format_message(article, fa_title, fa_summary):
     sentiment = get_sentiment_emoji(article["title"])
+    tags      = get_tags(article["title"], article["summary"])
+    tags_line = " ".join(tags)
+
     lines = [
         f"{sentiment} <b>{fa_title}</b>",
         "",
@@ -135,6 +196,8 @@ def format_message(article, fa_title, fa_summary):
         "",
         f"📰 منبع: {article['source']}",
         f'🔗 <a href="{article["url"]}">مطالعه کامل خبر</a>',
+        "",
+        tags_line,
         "",
         "━━━━━━━━━━━━━━━",
         "👥 @Crypto_Zone360 | به ما بپیوندید 🦈",
