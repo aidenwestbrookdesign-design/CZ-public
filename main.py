@@ -91,6 +91,27 @@ def is_important(title):
         if re.search(r'\b' + re.escape(kw.lower()) + r'\b', title_lower):
             return True
     return False
+def score_article(title):
+    score = 0
+    title_lower = title.lower()
+    
+    # High value topics
+    high = ["etf", "sec", "regulation", "ban", "lawsuit", "hack",
+            "halving", "all-time high", "ath", "crash", "approval"]
+    # Medium value topics  
+    medium = ["bitcoin", "ethereum", "binance", "coinbase", "btc", "eth"]
+
+    for word in high:
+        if word in title_lower:
+            score += 3
+    for word in medium:
+        if word in title_lower:
+            score += 1
+    # Bonus for sentiment (big moves are important)
+    if any(w in title_lower for w in BULLISH_WORDS + BEARISH_WORDS):
+        score += 2
+
+    return score
 
 def get_sentiment_emoji(title):
     title_lower = title.lower()
