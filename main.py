@@ -234,7 +234,8 @@ def main():
     print(f"📥 Fetched {len(articles)} articles")
 
     sent = 0
-    for article in articles:
+    articles.sort(key=lambda a: score_article(a["title"]), reverse=True)
+for article in articles[:10]:  # Only consider top 10 scored
         url   = article["url"]
         title = article["title"]
 
