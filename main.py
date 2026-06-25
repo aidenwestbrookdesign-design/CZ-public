@@ -11,6 +11,8 @@ from datetime import datetime, timezone
 TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
 TELEGRAM_CHANNEL_ID = os.environ["TELEGRAM_CHANNEL_ID"]
 
+MAX_POSTS_PER_RUN = 5
+
 # ===== RSS Sources =====
 RSS_FEEDS = [
     ("CoinTelegraph",    "https://cointelegraph.com/rss"),
@@ -19,7 +21,6 @@ RSS_FEEDS = [
     ("Bitcoin Magazine", "https://bitcoinmagazine.com/.rss/full/"),
 ]
 
-# ===== Keywords =====
 KEYWORDS = [
     "Bitcoin", "Ethereum", "SEC", "ETF", "Ripple", "Binance", "Solana",
     "crypto", "cryptocurrency", "regulation", "altcoin", "blockchain",
@@ -32,7 +33,6 @@ BULLISH_WORDS = ["surge", "rally", "bullish", "gain", "rise", "soar", "pump",
 BEARISH_WORDS = ["crash", "drop", "bearish", "fall", "plunge", "dump", "ban",
                  "lawsuit", "hack", "scam", "fear", "loss", "decline", "sell-off"]
 
-# ===== Tag Map (keyword → hashtags) =====
 TAG_MAP = {
     "bitcoin":        ["#Bitcoin", "#BTC", "#ارز_دیجیتال", "#کریپتو"],
     "btc":            ["#Bitcoin", "#BTC", "#ارز_دیجیتال", "#کریپتو"],
@@ -43,7 +43,6 @@ TAG_MAP = {
     "ripple":         ["#Ripple", "#XRP", "#ارز_دیجیتال", "#کریپتو"],
     "xrp":            ["#XRP", "#Ripple", "#ارز_دیجیتال", "#کریپتو"],
     "solana":         ["#Solana", "#SOL", "#ارز_دیجیتال", "#کریپتو"],
-    "sol":            ["#SOL", "#Solana", "#ارز_دیجیتال", "#کریپتو"],
     "coinbase":       ["#Coinbase", "#صرافی", "#کریپتو", "#ارز_دیجیتال"],
     "grayscale":      ["#Grayscale", "#Bitcoin", "#ETF", "#کریپتو"],
     "sec":            ["#SEC", "#قانون_گذاری", "#کریپتو", "#ارز_دیجیتال"],
@@ -67,7 +66,6 @@ TAG_MAP = {
     "bearish":        ["#نزولی", "#Bearish", "#کریپتو", "#بازار"],
     "surge":          ["#صعودی", "#رشد", "#کریپتو", "#بازار"],
     "crash":          ["#نزولی", "#سقوط", "#کریپتو", "#بازار"],
-    "etf approval":   ["#ETF", "#Bitcoin", "#SEC", "#سرمایه_گذاری"],
 }
 
 POSTED_FILE = "posted_urls.json"
@@ -91,26 +89,21 @@ def is_important(title):
         if re.search(r'\b' + re.escape(kw.lower()) + r'\b', title_lower):
             return True
     return False
+
 def score_article(title):
     score = 0
     title_lower = title.lower()
-    
-    # High value topics
-    high = ["etf", "sec", "regulation", "ban", "lawsuit", "hack",
-            "halving", "all-time high", "ath", "crash", "approval"]
-    # Medium value topics  
+    high   = ["etf", "sec", "regulation", "ban", "lawsuit", "hack",
+              "halving", "all-time high", "ath", "crash", "approval"]
     medium = ["bitcoin", "ethereum", "binance", "coinbase", "btc", "eth"]
-
     for word in high:
         if word in title_lower:
             score += 3
     for word in medium:
         if word in title_lower:
             score += 1
-    # Bonus for sentiment (big moves are important)
     if any(w in title_lower for w in BULLISH_WORDS + BEARISH_WORDS):
         score += 2
-
     return score
 
 def get_sentiment_emoji(title):
@@ -124,23 +117,18 @@ def get_sentiment_emoji(title):
     return "⚪️"
 
 def get_tags(title, summary=""):
-    """Pick top 5 unique hashtags based on title and summary keywords."""
     text = (title + " " + summary).lower()
     collected = []
     seen = set()
-
     for keyword, tags in TAG_MAP.items():
         if keyword in text:
             for tag in tags:
                 if tag not in seen:
                     seen.add(tag)
                     collected.append(tag)
-
-    # Always include #کریپتو and #ارز_دیجیتال as fallback
-    for fallback in ["#کریپتو", "#ارز_دیجیتال"]:
+    for fallback in ["#کریپتو", "#اخبار_کریپتو", "#ارز_دیجیتال"]:
         if fallback not in seen:
             collected.append(fallback)
-
     return collected[:5]
 
 def translate(text):
@@ -206,22 +194,19 @@ def fetch_news():
     return articles
 
 def format_message(article, fa_title, fa_summary):
-    sentiment = get_sentiment_emoji(article["title"])
-    tags      = get_tags(article["title"], article["summary"])
+    tags = get_tags(article["title"], article["summary"])
     tags_line = " ".join(tags)
-
     lines = [
-        f"{sentiment} <b>{fa_title}</b>",
+        f"📢 <b>{fa_title}</b>",
         "",
         f"📝 {fa_summary}" if fa_summary else "",
         "",
-        f"📰 منبع: {article['source']}",
-        f'🔗 <a href="{article["url"]}">مطالعه کامل خبر</a>',
+        f'🔗 <a href="{article["url"]}">ادامه مطلب</a>',
+        "",
+        "👥 @Crypto_Zone360",
+        "به ما بپیوندید 🦈",
         "",
         tags_line,
-        "",
-        "━━━━━━━━━━━━━━━",
-        "👥 @Crypto_Zone360 | به ما بپیوندید 🦈",
     ]
     return "\n".join(line for line in lines if line is not None)
 
@@ -233,9 +218,14 @@ def main():
     articles = fetch_news()
     print(f"📥 Fetched {len(articles)} articles")
 
-    sent = 0
+    # Sort by importance score
     articles.sort(key=lambda a: score_article(a["title"]), reverse=True)
-for article in articles[:10]:  # Only consider top 10 scored
+
+    sent = 0
+    for article in articles:
+        if sent >= MAX_POSTS_PER_RUN:
+            break
+
         url   = article["url"]
         title = article["title"]
 
