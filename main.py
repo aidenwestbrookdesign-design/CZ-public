@@ -8,8 +8,9 @@ from deep_translator import GoogleTranslator
 from datetime import datetime, timezone
 
 # ===== Config =====
-TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+TELEGRAM_BOT_TOKEN  = os.environ["TELEGRAM_BOT_TOKEN"]
 TELEGRAM_CHANNEL_ID = os.environ["TELEGRAM_CHANNEL_ID"]
+GEMINI_API_KEY      = os.environ["GEMINI_API_KEY"]
 
 MAX_POSTS_PER_RUN = 5
 
@@ -72,6 +73,8 @@ POSTED_FILE = "posted_urls.json"
 MAX_SUMMARY_LENGTH = 200
 
 
+# ===== Helpers =====
+
 def clean_html(text):
     text = re.sub(r"<[^>]+>", "", text or "")
     text = re.sub(r"&[a-zA-Z]+;", " ", text)
@@ -131,6 +134,57 @@ def get_tags(title, summary=""):
             collected.append(fallback)
     return collected[:5]
 
+# ===== Crypto Prices =====
+
+def get_prices():
+    try:
+        url = "https://api.coingecko.com/api/v3/simple/price"
+        params = {
+            "ids": "bitcoin,ethereum",
+            "vs_currencies": "usd",
+            "include_24hr_change": "true"
+        }
+        r = requests.get(url, params=params, timeout=10)
+        data = r.json()
+        btc = data["bitcoin"]
+        eth = data["ethereum"]
+        btc_change = btc.get("usd_24h_change", 0)
+        eth_change = eth.get("usd_24h_change", 0)
+        btc_emoji = "📈" if btc_change >= 0 else "📉"
+        eth_emoji = "📈" if eth_change >= 0 else "📉"
+        return (
+            f"{btc_emoji} BTC: ${btc['usd']:,.0f} ({btc_change:+.1f}%)\n"
+            f"{eth_emoji} ETH: ${eth['usd']:,.0f} ({eth_change:+.1f}%)"
+        )
+    except Exception as e:
+        print("Price fetch failed:", e)
+        return None
+
+# ===== AI Analysis (Gemini - Free) =====
+
+def get_ai_analysis(title, summary):
+    try:
+        prompt = f"""You are a professional crypto market analyst.
+Analyze this news in Farsi (Persian) in exactly 2-3 short sentences.
+Focus on: market impact, what it means for investors, short-term outlook.
+Be direct and insightful. Write ONLY in Farsi. No English at all.
+
+News title: {title}
+News summary: {summary}"""
+
+        response = requests.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}",
+            json={"contents": [{"parts": [{"text": prompt}]}]},
+            timeout=30
+        )
+        data = response.json()
+        return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+    except Exception as e:
+        print("AI analysis failed:", e)
+        return None
+
+# ===== Translation =====
+
 def translate(text):
     if not text:
         return ""
@@ -143,6 +197,8 @@ def translate(text):
             print(f"Translation attempt {attempt+1} failed:", e)
             time.sleep(2)
     return ""
+
+# ===== Telegram =====
 
 def send_to_telegram(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
@@ -163,6 +219,8 @@ def send_to_telegram(message):
         time.sleep(2)
     return False
 
+# ===== Persistence =====
+
 def load_posted():
     if os.path.exists(POSTED_FILE):
         with open(POSTED_FILE, "r") as f:
@@ -172,6 +230,8 @@ def load_posted():
 def save_posted(posted):
     with open(POSTED_FILE, "w") as f:
         json.dump(list(posted)[-1000:], f)
+
+# ===== Fetch News =====
 
 def fetch_news():
     articles = []
@@ -193,14 +253,35 @@ def fetch_news():
             print(f"RSS fetch error ({source_name}):", e)
     return articles
 
-def format_message(article, fa_title, fa_summary):
-    tags = get_tags(article["title"], article["summary"])
+# ===== Format Message =====
+
+def format_message(article, fa_title, fa_summary, analysis, prices):
+    tags      = get_tags(article["title"], article["summary"])
     tags_line = " ".join(tags)
+    sentiment = get_sentiment_emoji(article["title"])
+
     lines = [
-        f"📢 <b>{fa_title}</b>",
+        f"{sentiment} <b>{fa_title}</b>",
         "",
         f"📝 {fa_summary}" if fa_summary else "",
         "",
+    ]
+
+    if analysis:
+        lines += [
+            "🧠 <b>تحلیل:</b>",
+            analysis,
+            "",
+        ]
+
+    if prices:
+        lines += [
+            "💰 <b>قیمت لحظه‌ای:</b>",
+            prices,
+            "",
+        ]
+
+    lines += [
         f'🔗 <a href="{article["url"]}">ادامه مطلب</a>',
         "",
         "👥 @Crypto_Zone360",
@@ -208,7 +289,10 @@ def format_message(article, fa_title, fa_summary):
         "",
         tags_line,
     ]
+
     return "\n".join(line for line in lines if line is not None)
+
+# ===== Main =====
 
 def main():
     now = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
@@ -216,9 +300,9 @@ def main():
 
     posted   = load_posted()
     articles = fetch_news()
+    prices   = get_prices()
     print(f"📥 Fetched {len(articles)} articles")
 
-    # Sort by importance score
     articles.sort(key=lambda a: score_article(a["title"]), reverse=True)
 
     sent = 0
@@ -238,12 +322,13 @@ def main():
 
         fa_title   = translate(title)
         fa_summary = translate(article["summary"])
+        analysis   = get_ai_analysis(title, article["summary"])
 
         if not fa_title:
             print("⚠️ Skipping — translation failed")
             continue
 
-        message = format_message(article, fa_title, fa_summary)
+        message = format_message(article, fa_title, fa_summary, analysis, prices)
         if send_to_telegram(message):
             posted.add(url)
             sent += 1
