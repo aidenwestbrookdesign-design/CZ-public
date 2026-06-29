@@ -173,7 +173,7 @@ News title: {title}
 News summary: {summary}"""
 
         response = requests.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}",
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key={GEMINI_API_KEY}",
             json={"contents": [{"parts": [{"text": prompt}]}]},
             timeout=30
         )
