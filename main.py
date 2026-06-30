@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 # ===== Config =====
 TELEGRAM_BOT_TOKEN  = os.environ["TELEGRAM_BOT_TOKEN"]
 TELEGRAM_CHANNEL_ID = os.environ["TELEGRAM_CHANNEL_ID"]
-GEMINI_API_KEY      = os.environ["GEMINI_API_KEY"]
+HF_API_KEY          = os.environ["HF_API_KEY"]
 
 MAX_POSTS_PER_RUN = 5
 
@@ -160,34 +160,64 @@ def get_prices():
         print("Price fetch failed:", e)
         return None
 
-# ===== AI Analysis (Gemini - Free) =====
+# ===== AI Analysis (Hugging Face) =====
 
 def get_ai_analysis(title, summary):
-    try:
-        prompt = f"""You are a professional crypto market analyst.
+    prompt = f"""<s>[INST] You are a professional crypto market analyst.
 Analyze this news in Farsi (Persian) in exactly 2-3 short sentences.
 Focus on: market impact, what it means for investors, short-term outlook.
 Be direct and insightful. Write ONLY in Farsi. No English at all.
 
 News title: {title}
-News summary: {summary}"""
+News summary: {summary} [/INST]"""
 
-        response = requests.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key={GEMINI_API_KEY}",
-            json={"contents": [{"parts": [{"text": prompt}]}]},
-            timeout=30
-        )
-        data = response.json()
-        print("Gemini raw response:", json.dumps(data)[:300])
+    # Try multiple models in case one is loading
+    models = [
+        "mistralai/Mistral-7B-Instruct-v0.2",
+        "HuggingFaceH4/zephyr-7b-beta",
+        "tiiuae/falcon-7b-instruct",
+    ]
 
-        if "candidates" not in data:
-            print("No candidates in response:", data)
-            return None
+    for model in models:
+        for attempt in range(3):
+            try:
+                response = requests.post(
+                    f"https://api-inference.huggingface.co/models/{model}",
+                    headers={"Authorization": f"Bearer {HF_API_KEY}"},
+                    json={
+                        "inputs": prompt,
+                        "parameters": {
+                            "max_new_tokens": 200,
+                            "return_full_text": False,
+                            "temperature": 0.7,
+                        }
+                    },
+                    timeout=60
+                )
+                data = response.json()
 
-        return data["candidates"][0]["content"]["parts"][0]["text"].strip()
-    except Exception as e:
-        print("AI analysis failed:", e)
-        return None
+                # Model still loading
+                if "error" in data and "loading" in str(data.get("error", "")):
+                    wait = data.get("estimated_time", 20)
+                    print(f"Model loading, waiting {wait}s...")
+                    time.sleep(wait)
+                    continue
+
+                if isinstance(data, list) and data:
+                    text = data[0].get("generated_text", "").strip()
+                    if text:
+                        print(f"✅ Analysis from {model}")
+                        return text
+
+                print(f"Unexpected response from {model}:", str(data)[:200])
+                break
+
+            except Exception as e:
+                print(f"Attempt {attempt+1} failed for {model}:", e)
+                time.sleep(3)
+
+    print("All models failed — skipping analysis")
+    return None
 
 # ===== Translation =====
 
