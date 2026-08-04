@@ -69,106 +69,113 @@ TAG_MAP = {
     "crash":          ["#نزولی", "#سقوط", "#کریپتو", "#بازار"],
 }
 
-# ===== Analysis Phrase Banks =====
+# ===== Terms to protect from translation =====
+PRESERVE_TERMS = [
+    # Companies & orgs
+    "BlackRock", "MicroStrategy", "Coinbase", "Grayscale", "Binance", "Tether",
+    "Ripple Labs", "Circle", "Kraken", "Gemini", "PayPal", "Fidelity", "Vanguard",
+    # Regulators
+    "SEC", "CFTC", "FDIC", "Federal Reserve", "Fed",
+    # Products
+    "Bitcoin ETF", "Spot ETF", "Futures ETF", "ETF",
+    "Bitcoin", "BTC", "Ethereum", "ETH", "Solana", "SOL",
+    "Ripple", "XRP", "Binance", "BNB", "Cardano", "ADA",
+    "Dogecoin", "DOGE", "Avalanche", "AVAX", "Chainlink", "LINK",
+    "Polkadot", "DOT", "Litecoin", "LTC", "USDT", "USDC",
+    "Tron", "TRX", "Shiba Inu", "SHIB",
+    # Tech terms
+    "DeFi", "NFT", "Web3", "DAO", "DEX", "CEX", "Layer 2", "L2",
+    "Proof of Work", "Proof of Stake", "PoW", "PoS",
+    "blockchain", "Blockchain",
+    "halving", "Halving",
+    "stablecoin", "Stablecoin",
+    "altcoin", "Altcoin",
+    "wallet", "Wallet",
+    "mining", "Mining",
+    "airdrop", "Airdrop",
+    "smart contract", "Smart Contract",
+    "gas fee", "Gas Fee",
+    "mempool", "Mempool",
+    "MACD", "RSI", "ATH", "ATL",
+]
 
+# Sort by length descending so longer terms match first
+PRESERVE_TERMS = sorted(PRESERVE_TERMS, key=len, reverse=True)
+
+POSTED_FILE = "posted_urls.json"
+MAX_SUMMARY_LENGTH = 200
+
+# ===== Analysis Phrase Banks =====
 TOPIC_PHRASES = {
     "etf_approval": [
         "تأیید ETF می‌تواند موج جدیدی از سرمایه‌گذاری نهادی را وارد بازار کند.",
-        "این اتفاق دسترسی سرمایه‌گذاران سنتی به بازار کریپتو را به شکل چشمگیری آسان‌تر می‌کند.",
-        "تأیید ETF یک نقطه عطف مهم برای پذیرش گسترده‌تر ارزهای دیجیتال است.",
+        "این اتفاق دسترسی سرمایه‌گذاران سنتی به بازار کریپتو را آسان‌تر می‌کند.",
         "ETF می‌تواند میلیاردها دلار سرمایه جدید را به اکوسیستم کریپتو جذب کند.",
         "این تصمیم اعتبار بازار کریپتو را نزد سرمایه‌گذاران محافظه‌کار افزایش می‌دهد.",
+        "تأیید ETF یک نقطه عطف مهم برای پذیرش گسترده‌تر ارزهای دیجیتال است.",
     ],
     "etf_general": [
         "ETF ابزاری قدرتمند برای ورود سرمایه‌های بزرگ به بازار کریپتو است.",
         "توجه نهادها به ETF نشانه‌ای از بلوغ بازار ارزهای دیجیتال است.",
+        "نگاه بازار به ETF نشان‌دهنده اشتیاق برای ابزارهای مالی رگوله‌شده است.",
         "این تحولات در حوزه ETF می‌تواند تعادل عرضه و تقاضا را تغییر دهد.",
         "ETF کریپتو همچنان یکی از داغ‌ترین موضوعات در میان سرمایه‌گذاران است.",
-        "نگاه بازار به ETF نشان‌دهنده اشتیاق برای ابزارهای مالی رگوله‌شده است.",
     ],
-    "sec_lawsuit": [
-        "اقدام قانونی SEC فشار نظارتی بر صنعت کریپتو را افزایش می‌دهد و بازار را به احتیاط وا می‌دارد.",
-        "این دعوای حقوقی ابهامات قانونی در بازار را بیشتر می‌کند و ممکن است سرمایه‌گذاران را نگران کند.",
-        "اقدام SEC نشان می‌دهد که نهادهای نظارتی همچنان نگاه دقیقی به صنعت کریپتو دارند.",
-        "این پرونده می‌تواند به عنوان پیشینه‌ای برای تنظیم مقررات آینده صنعت کریپتو عمل کند.",
-        "چنین اقداماتی از سوی SEC معمولاً فشار کوتاه‌مدتی بر قیمت‌ها ایجاد می‌کند.",
-    ],
-    "sec_general": [
-        "موضع‌گیری SEC تأثیر مستقیمی بر احساسات بازار و رفتار سرمایه‌گذاران خواهد داشت.",
-        "نظارت SEC بر بازار کریپتو همچنان یکی از عوامل اصلی نوسانات قیمتی است.",
-        "اظهارات نهادهای نظارتی مانند SEC همواره باید با دقت دنبال شود.",
-        "این تحولات نظارتی چشم‌انداز قانونی بازار کریپتو را شکل می‌دهند.",
-        "موضع‌گیری‌های SEC تعیین‌کننده مسیر آینده پذیرش کریپتو در آمریکاست.",
+    "sec": [
+        "اقدام SEC فشار نظارتی بر صنعت کریپتو را افزایش می‌دهد.",
+        "این دعوای حقوقی ابهامات قانونی در بازار را بیشتر می‌کند.",
+        "موضع‌گیری SEC تأثیر مستقیمی بر احساسات بازار خواهد داشت.",
+        "این پرونده می‌تواند پیشینه‌ای برای تنظیم مقررات آینده باشد.",
+        "نظارت SEC بر بازار کریپتو همچنان یکی از عوامل اصلی نوسانات است.",
     ],
     "hack": [
-        "این حمله امنیتی یادآور اهمیت انتخاب کیف‌پول‌های معتبر و نگهداری امن دارایی‌هاست.",
-        "هک‌های بزرگ معمولاً فشار نزولی موقتی بر بازار ایجاد می‌کنند اما پروتکل‌های امنیتی را تقویت می‌کنند.",
-        "این رویداد نشان می‌دهد که امنیت سایبری همچنان یکی از چالش‌های اصلی صنعت کریپتو است.",
-        "سرمایه‌گذاران باید دارایی‌های خود را از صرافی‌ها خارج و در کیف‌پول سرد نگهداری کنند.",
-        "این حادثه اهمیت ممیزی‌های امنیتی مستمر در پروتکل‌های بلاکچین را نشان می‌دهد.",
+        "این حمله امنیتی یادآور اهمیت نگهداری امن دارایی‌هاست.",
+        "هک‌های بزرگ فشار نزولی موقتی ایجاد می‌کنند اما پروتکل‌های امنیتی را تقویت می‌کنند.",
+        "سرمایه‌گذاران باید دارایی‌های خود را در کیف‌پول سرد نگهداری کنند.",
+        "این رویداد نشان می‌دهد که امنیت سایبری چالش اصلی صنعت کریپتو است.",
+        "این حادثه اهمیت ممیزی‌های امنیتی مستمر را نشان می‌دهد.",
     ],
     "halving": [
-        "هاوینگ با کاهش عرضه جدید بیت‌کوین، معمولاً زمینه را برای افزایش قیمت در بلندمدت فراهم می‌کند.",
-        "تاریخچه نشان می‌دهد که هاوینگ‌های قبلی با رشد قابل توجه قیمت همراه بوده‌اند.",
-        "هاوینگ یکی از مهم‌ترین رویدادهای اقتصادی در چرخه بیت‌کوین به شمار می‌رود.",
-        "با نزدیک شدن به هاوینگ، توجه نهادی و خرده‌فروشی به بیت‌کوین افزایش می‌یابد.",
-        "اثر هاوینگ بر قیمت معمولاً با تأخیر چند ماهه خود را نشان می‌دهد.",
+        "Halving با کاهش عرضه Bitcoin، زمینه افزایش قیمت در بلندمدت را فراهم می‌کند.",
+        "تاریخچه نشان می‌دهد Halvingهای قبلی با رشد قابل توجه همراه بوده‌اند.",
+        "با نزدیک شدن به Halving، توجه نهادی به Bitcoin افزایش می‌یابد.",
+        "اثر Halving بر قیمت معمولاً با تأخیر چند ماهه خود را نشان می‌دهد.",
+        "Halving یکی از مهم‌ترین رویدادهای اقتصادی در چرخه Bitcoin است.",
     ],
     "regulation": [
-        "قوانین جدید می‌توانند در کوتاه‌مدت نوسان ایجاد کنند اما در بلندمدت به ثبات بازار کمک می‌کنند.",
+        "قوانین جدید در کوتاه‌مدت نوسان ایجاد می‌کنند اما در بلندمدت به ثبات کمک می‌کنند.",
         "وضوح قانونی یکی از مهم‌ترین عوامل برای جذب سرمایه‌گذاری نهادی است.",
-        "این تحولات قانونی نشان‌دهنده تلاش دولت‌ها برای یکپارچه‌سازی کریپتو در سیستم مالی است.",
-        "مقررات جدید همیشه دو روی سکه دارند: محدودیت برای برخی و فرصت برای سازگاران.",
-        "سرمایه‌گذاران باید تحولات قانونی را با دقت دنبال کنند زیرا مستقیماً بر بازار اثر می‌گذارند.",
+        "مقررات جدید همیشه دو روی سکه دارند: محدودیت و فرصت.",
+        "این تحولات قانونی نشان‌دهنده تلاش دولت‌ها برای یکپارچه‌سازی کریپتو است.",
+        "سرمایه‌گذاران باید تحولات قانونی را با دقت دنبال کنند.",
     ],
     "ban": [
-        "ممنوعیت‌ها معمولاً اثر کوتاه‌مدت دارند زیرا ماهیت غیرمتمرکز کریپتو را نمی‌توان به راحتی محدود کرد.",
-        "این اقدام ممکن است سرمایه را به سمت مناطق با قوانین دوستانه‌تر هدایت کند.",
-        "تاریخ نشان داده که ممنوعیت‌ها اغلب موقتی هستند و بازار پس از آن قوی‌تر باز می‌گردد.",
-        "این خبر در کوتاه‌مدت احساسات منفی ایجاد می‌کند اما تأثیر بلندمدت آن محدود است.",
+        "ممنوعیت‌ها معمولاً اثر کوتاه‌مدت دارند زیرا کریپتو غیرمتمرکز است.",
         "واکنش بازار به ممنوعیت‌ها اغلب اغراق‌آمیز است و فرصت خرید ایجاد می‌کند.",
-    ],
-    "partnership": [
-        "این همکاری می‌تواند پذیرش گسترده‌تر فناوری بلاکچین را در صنایع سنتی تسریع کند.",
-        "اشتراک‌گذاری میان شرکت‌های بزرگ و پروژه‌های کریپتو نشانه‌ای مثبت برای آینده صنعت است.",
-        "این نوع همکاری‌ها اعتبار پروژه را نزد سرمایه‌گذاران نهادی افزایش می‌دهد.",
-        "ادغام فناوری‌های Web3 با کسب‌وکارهای سنتی روندی رو به رشد و پایدار است.",
-        "این اعلام نشان‌دهنده اعتماد فزاینده شرکت‌های بزرگ به زیرساخت‌های بلاکچین است.",
+        "تاریخ نشان داده که ممنوعیت‌ها اغلب موقتی هستند.",
+        "این اقدام ممکن است سرمایه را به مناطق با قوانین دوستانه‌تر هدایت کند.",
+        "این خبر در کوتاه‌مدت احساسات منفی ایجاد می‌کند اما تأثیر بلندمدت آن محدود است.",
     ],
     "price_surge": [
-        "این رشد قیمتی می‌تواند نقطه شروع یک روند صعودی پایدار باشد اما تأیید حجم معاملات لازم است.",
-        "سیگنال‌های تکنیکال صعودی هستند اما سرمایه‌گذاران باید مراقب پولبک‌های احتمالی باشند.",
-        "این جهش قیمتی توجه سرمایه‌گذاران جدید را جلب می‌کند که خود می‌تواند روند را تقویت کند.",
         "رشد قوی قیمت نشانه‌ای از افزایش تقاضا و اعتماد بازار است.",
+        "این جهش قیمتی توجه سرمایه‌گذاران جدید را جلب می‌کند.",
+        "سیگنال‌های تکنیکال صعودی هستند اما باید مراقب پولبک‌های احتمالی بود.",
         "در چنین شرایطی مدیریت ریسک و تعیین حد ضرر اهمیت ویژه‌ای دارد.",
+        "این رشد می‌تواند نقطه شروع یک روند صعودی پایدار باشد.",
     ],
     "price_crash": [
-        "این افت قیمت فرصتی برای خرید پله‌ای بلندمدت ایجاد می‌کند اما باید منتظر تثبیت بود.",
-        "سطوح حمایتی کلیدی باید با دقت دنبال شوند تا از ادامه روند نزولی جلوگیری شود.",
-        "در شرایط نزولی، مدیریت سرمایه و حفظ نقدینگی اولویت اصلی سرمایه‌گذاران است.",
-        "این اصلاح قیمتی در بلندمدت می‌تواند پایه محکم‌تری برای رشد آینده ایجاد کند.",
+        "این افت قیمت فرصتی برای خرید پله‌ای بلندمدت ایجاد می‌کند.",
+        "در شرایط نزولی، مدیریت سرمایه و حفظ نقدینگی اولویت است.",
+        "سطوح حمایتی کلیدی باید با دقت دنبال شوند.",
+        "این اصلاح قیمتی می‌تواند پایه محکم‌تری برای رشد آینده ایجاد کند.",
         "بازار کریپتو سابقه بازگشت قوی پس از اصلاح‌های شدید را دارد.",
     ],
-    "adoption": [
-        "پذیرش گسترده‌تر کریپتو توسط کسب‌وکارها نشانه‌ای قوی از بلوغ این بازار است.",
-        "هر قدم به سوی پذیرش جریان اصلی، ارزش بلندمدت اکوسیستم کریپتو را افزایش می‌دهد.",
-        "این نوع اخبار معمولاً تأثیر مثبت پایداری بر اعتماد سرمایه‌گذاران دارد.",
-        "گسترش استفاده واقعی از کریپتو در تجارت و مالیه، پشتوانه قوی‌تری برای قیمت‌ها ایجاد می‌کند.",
-        "این تحول نشان می‌دهد که کریپتو دیگر فقط یک ابزار سرمایه‌گذاری نیست بلکه یک فناوری کاربردی است.",
-    ],
-    "defi": [
-        "DeFi همچنان در حال تغییر ساختار سیستم مالی سنتی است و این اخبار نشان‌دهنده رشد این بخش است.",
-        "پروتکل‌های DeFi با ارائه خدمات مالی بدون واسطه، فرصت‌های جدیدی برای سرمایه‌گذاران ایجاد می‌کنند.",
-        "رشد DeFi نشان‌دهنده تقاضای واقعی برای سیستم‌های مالی غیرمتمرکز است.",
-        "این تحولات در DeFi می‌تواند نقدینگی قابل توجهی را وارد اکوسیستم کریپتو کند.",
-        "DeFi به عنوان یکی از نوآورانه‌ترین بخش‌های صنعت کریپتو همچنان در حال تکامل است.",
-    ],
     "general": [
-        "این خبر می‌تواند تأثیر قابل توجهی بر احساسات کلی بازار در روزهای آینده داشته باشد.",
+        "این خبر می‌تواند تأثیر قابل توجهی بر احساسات بازار داشته باشد.",
         "سرمایه‌گذاران باید این تحول را در کنار سایر شاخص‌های بازار بررسی کنند.",
-        "تحلیل دقیق‌تر این خبر نیازمند بررسی داده‌های بیشتری از بازار است.",
-        "این رویداد یکی از عوامل متعددی است که در کوتاه‌مدت بر قیمت‌ها تأثیر می‌گذارد.",
         "بازار کریپتو همواره به اخبار با حساسیت بالایی واکنش نشان می‌دهد.",
+        "این رویداد یکی از عوامل متعددی است که بر قیمت‌ها تأثیر می‌گذارد.",
+        "تحلیل دقیق‌تر این خبر نیازمند بررسی داده‌های بیشتری است.",
     ],
 }
 
@@ -176,7 +183,7 @@ DIRECTION_BULLISH = [
     "سیگنال‌های صعودی در کوتاه‌مدت قوی به نظر می‌رسند.",
     "چشم‌انداز کوتاه‌مدت مثبت است اما مدیریت ریسک فراموش نشود.",
     "این خبر می‌تواند محرک خوبی برای ادامه روند صعودی باشد.",
-    "بازار واکنش مثبتی به این خبر نشان داده و روند صعودی محتمل است.",
+    "بازار واکنش مثبتی نشان داده و روند صعودی محتمل است.",
     "فشار خرید افزایش یافته و کف‌های قیمتی محکم‌تر شده‌اند.",
 ]
 
@@ -190,14 +197,11 @@ DIRECTION_BEARISH = [
 
 DIRECTION_NEUTRAL = [
     "بازار در انتظار سیگنال‌های بیشتر برای تعیین جهت است.",
+    "در چنین شرایطی تنوع‌بخشی به سبد سرمایه‌گذاری اهمیت ویژه‌ای دارد.",
     "این خبر در کوتاه‌مدت تأثیر محدودی خواهد داشت اما در بلندمدت اهمیت دارد.",
     "سرمایه‌گذاران باید با دید بلندمدت به این تحولات نگاه کنند.",
     "تحلیلگران دیدگاه‌های متفاوتی دارند و باید داده‌های بیشتری منتظر ماند.",
-    "در چنین شرایطی تنوع‌بخشی به سبد سرمایه‌گذاری اهمیت ویژه‌ای دارد.",
 ]
-
-POSTED_FILE = "posted_urls.json"
-MAX_SUMMARY_LENGTH = 200
 
 
 # ===== Helpers =====
@@ -261,65 +265,96 @@ def get_tags(title, summary=""):
             collected.append(fallback)
     return collected[:5]
 
-# ===== Smart Rule-Based Analysis =====
+# ===== Smart Translation =====
+
+def protect_terms(text):
+    """Replace technical terms with placeholders before translating."""
+    placeholders = {}
+    protected = text
+    for i, term in enumerate(PRESERVE_TERMS):
+        placeholder = f"XX{i}XX"
+        pattern = re.compile(re.escape(term), re.IGNORECASE)
+        if pattern.search(protected):
+            # Store the original casing
+            match = pattern.search(protected)
+            placeholders[placeholder] = match.group(0)
+            protected = pattern.sub(placeholder, protected)
+    return protected, placeholders
+
+def restore_terms(text, placeholders):
+    """Restore placeholders back to original terms."""
+    for placeholder, original in placeholders.items():
+        text = text.replace(placeholder, original)
+    return text
+
+def translate(text):
+    if not text:
+        return ""
+    text = truncate(text, 400)
+
+    # Protect technical terms
+    protected, placeholders = protect_terms(text)
+
+    for attempt in range(3):
+        try:
+            result = GoogleTranslator(source='en', target='fa').translate(protected)
+            if result:
+                result = restore_terms(result, placeholders)
+                return result.strip()
+        except Exception as e:
+            print(f"Translation attempt {attempt+1} failed:", e)
+            time.sleep(2)
+    return ""
+
+# ===== Analysis =====
 
 def get_ai_analysis(title, summary):
     text = (title + " " + summary).lower()
 
-    # Detect topic
-    if "etf" in text and ("approval" in text or "approve" in text or "approv" in text):
+    if "etf" in text and ("approval" in text or "approve" in text):
         topic = random.choice(TOPIC_PHRASES["etf_approval"])
     elif "etf" in text:
         topic = random.choice(TOPIC_PHRASES["etf_general"])
-    elif "sec" in text and ("lawsuit" in text or "sue" in text or "charge" in text or "action" in text):
-        topic = random.choice(TOPIC_PHRASES["sec_lawsuit"])
     elif "sec" in text or "cftc" in text:
-        topic = random.choice(TOPIC_PHRASES["sec_general"])
-    elif "hack" in text or "exploit" in text or "breach" in text or "stolen" in text:
+        topic = random.choice(TOPIC_PHRASES["sec"])
+    elif "hack" in text or "exploit" in text or "stolen" in text:
         topic = random.choice(TOPIC_PHRASES["hack"])
-    elif "halving" in text or "halvening" in text:
+    elif "halving" in text:
         topic = random.choice(TOPIC_PHRASES["halving"])
-    elif "ban" in text or "banned" in text or "prohibit" in text:
+    elif "ban" in text or "prohibit" in text:
         topic = random.choice(TOPIC_PHRASES["ban"])
-    elif "regulation" in text or "regulate" in text or "law" in text or "bill" in text:
+    elif "regulation" in text or "law" in text or "bill" in text:
         topic = random.choice(TOPIC_PHRASES["regulation"])
-    elif "partner" in text or "collaboration" in text or "integration" in text:
-        topic = random.choice(TOPIC_PHRASES["partnership"])
-    elif "defi" in text or "decentralized finance" in text:
-        topic = random.choice(TOPIC_PHRASES["defi"])
-    elif "adopt" in text or "launch" in text or "accept" in text:
-        topic = random.choice(TOPIC_PHRASES["adoption"])
-    elif any(w in text for w in ["surge", "rally", "soar", "breakout", "ath", "all-time high"]):
+    elif any(w in text for w in ["surge", "rally", "soar", "ath", "all-time high"]):
         topic = random.choice(TOPIC_PHRASES["price_surge"])
-    elif any(w in text for w in ["crash", "plunge", "collapse", "dump", "sell-off"]):
+    elif any(w in text for w in ["crash", "plunge", "collapse", "dump"]):
         topic = random.choice(TOPIC_PHRASES["price_crash"])
     else:
         topic = random.choice(TOPIC_PHRASES["general"])
 
-    # Detect direction
     title_lower = title.lower()
-    bullish = any(w in title_lower for w in BULLISH_WORDS)
-    bearish = any(w in title_lower for w in BEARISH_WORDS)
-    if bullish and not bearish:
+    if any(w in title_lower for w in BULLISH_WORDS):
         direction = random.choice(DIRECTION_BULLISH)
-    elif bearish and not bullish:
+    elif any(w in title_lower for w in BEARISH_WORDS):
         direction = random.choice(DIRECTION_BEARISH)
     else:
         direction = random.choice(DIRECTION_NEUTRAL)
 
     return f"{topic} {direction}"
 
-# ===== Crypto Prices =====
+# ===== Prices =====
 
 def get_prices():
     try:
-        url = "https://api.coingecko.com/api/v3/simple/price"
-        params = {
-            "ids": "bitcoin,ethereum",
-            "vs_currencies": "usd",
-            "include_24hr_change": "true"
-        }
-        r = requests.get(url, params=params, timeout=10)
+        r = requests.get(
+            "https://api.coingecko.com/api/v3/simple/price",
+            params={
+                "ids": "bitcoin,ethereum",
+                "vs_currencies": "usd",
+                "include_24hr_change": "true",
+            },
+            timeout=10
+        )
         data = r.json()
         btc = data["bitcoin"]
         eth = data["ethereum"]
@@ -334,21 +369,6 @@ def get_prices():
     except Exception as e:
         print("Price fetch failed:", e)
         return None
-
-# ===== Translation =====
-
-def translate(text):
-    if not text:
-        return ""
-    text = truncate(text, 400)
-    for attempt in range(3):
-        try:
-            result = GoogleTranslator(source='en', target='fa').translate(text)
-            return result or ""
-        except Exception as e:
-            print(f"Translation attempt {attempt+1} failed:", e)
-            time.sleep(2)
-    return ""
 
 # ===== Telegram =====
 
