@@ -1,0 +1,21 @@
+name: Daily TA Tip
+
+on:
+  schedule:
+    - cron: '0 15 * * *'   # 7:00 PM Tehran time (UTC+3:30)
+  workflow_dispatch:
+
+jobs:
+  tip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - run: python tips.py
+        timeout-minutes: 5
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
