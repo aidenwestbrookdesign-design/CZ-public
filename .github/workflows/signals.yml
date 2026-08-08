@@ -1,0 +1,22 @@
+name: Market Signals
+
+on:
+  schedule:
+    - cron: '30 6 * * *'    # 10:00 AM Tehran
+    - cron: '30 11 * * *'   # 3:00 PM Tehran
+  workflow_dispatch:
+
+jobs:
+  signals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install requests
+      - run: python signals.py
+        timeout-minutes: 5
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
