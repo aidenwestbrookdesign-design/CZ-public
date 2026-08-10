@@ -3,7 +3,9 @@ name: Market Signals
 on:
   schedule:
     - cron: '30 6 * * *'    # 10:00 AM Tehran
+    - cron: '30 8 * * *'    # 12:00 PM Tehran
     - cron: '30 11 * * *'   # 3:00 PM Tehran
+    - cron: '30 13 * * *'   # 5:00 PM Tehran
   workflow_dispatch:
 
 jobs:
