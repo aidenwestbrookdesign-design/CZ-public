@@ -5,7 +5,7 @@ import re
 import random
 import feedparser
 import requests
-from deep_translator import GoogleTranslator
+from deep_translator import GoogleTranslator, MyMemoryTranslator
 from datetime import datetime, timezone
 
 # ===== Config =====
@@ -344,36 +344,34 @@ def get_image_url(title, summary):
 
 # ===== Translation =====
 
-def protect_terms(text):
-    placeholders = {}
-    protected = text
-    for i, term in enumerate(PRESERVE_TERMS):
-        placeholder = f"XX{i}XX"
-        pattern = re.compile(re.escape(term), re.IGNORECASE)
-        if pattern.search(protected):
-            match = pattern.search(protected)
-            placeholders[placeholder] = match.group(0)
-            protected = pattern.sub(placeholder, protected)
-    return protected, placeholders
-
-def restore_terms(text, placeholders):
-    for placeholder, original in placeholders.items():
-        text = text.replace(placeholder, original)
-    return text
-
 def translate(text):
     if not text:
         return ""
     text = truncate(text, 400)
     protected, placeholders = protect_terms(text)
+
+    # Try MyMemory first (different rate limits)
     for attempt in range(3):
         try:
+            time.sleep(4)
+            result = MyMemoryTranslator(source='en', target='fa').translate(protected)
+            if result:
+                return restore_terms(result, placeholders).strip()
+        except Exception as e:
+            print(f"MyMemory attempt {attempt+1} failed:", e)
+            time.sleep(5)
+
+    # Fallback to Google
+    for attempt in range(2):
+        try:
+            time.sleep(6)
             result = GoogleTranslator(source='en', target='fa').translate(protected)
             if result:
                 return restore_terms(result, placeholders).strip()
         except Exception as e:
-            print(f"Translation attempt {attempt+1} failed:", e)
-            time.sleep(2)
+            print(f"Google attempt {attempt+1} failed:", e)
+            time.sleep(6)
+
     return ""
 
 # ===== Analysis =====
