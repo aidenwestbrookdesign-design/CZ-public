@@ -341,18 +341,39 @@ def translate(text):
         return ""
     text = truncate(text, 400)
     protected, placeholders = protect_terms(text)
-
-    # Try MyMemory first (different rate limits)
     for attempt in range(3):
         try:
-            time.sleep(4)
-            result = MyMemoryTranslator(source='en', target='fa-IR').translate(protected)
+            time.sleep(8)
+            result = GoogleTranslator(source='auto', target='fa').translate(protected)
             if result:
                 return restore_terms(result, placeholders).strip()
         except Exception as e:
-            print(f"MyMemory attempt {attempt+1} failed:", e)
-            time.sleep(5)
+            print(f"Translation attempt {attempt+1} failed:", e)
+            time.sleep(15)
+    return ""
 
+def translate_batch(texts):
+    """Translate all texts in ONE API call instead of many."""
+    if not texts:
+        return []
+    protected_list, placeholder_list = [], []
+    for text in texts:
+        text = truncate(text or "", 400)
+        p, ph = protect_terms(text)
+        protected_list.append(p)
+        placeholder_list.append(ph)
+    for attempt in range(3):
+        try:
+            time.sleep(5)
+            results = GoogleTranslator(source='auto', target='fa').translate_batch(protected_list)
+            return [
+                restore_terms(r, ph).strip() if r else ""
+                for r, ph in zip(results, placeholder_list)
+            ]
+        except Exception as e:
+            print(f"Batch translation attempt {attempt+1} failed:", e)
+            time.sleep(15)
+    return [""] * len(texts)
     # Fallback to Google
     for attempt in range(2):
         try:
@@ -534,47 +555,46 @@ def main():
     articles.sort(key=lambda a: score_article(a["title"]), reverse=True)
 
     sent = 0
+        # Pick top articles first
+    to_post = []
     for article in articles:
-        if sent >= MAX_POSTS_PER_RUN:
+        if len(to_post) >= MAX_POSTS_PER_RUN:
             break
+        if article["url"] not in posted and is_important(article["title"]):
+            to_post.append(article)
 
-        url   = article["url"]
-        title = article["title"]
+    if not to_post:
+        print("✅ Done — 0 new articles posted.")
+        save_posted(posted)
+        return
 
-        if url in posted:
-            continue
-        if not is_important(title):
-            continue
+    # Batch translate everything in ONE call
+    all_texts = []
+    for article in to_post:
+        all_texts.append(article["title"])
+        all_texts.append(article.get("summary", ""))
+    translated = translate_batch(all_texts)
 
-        print(f"📌 [{article['source']}] {title}")
-
-        fa_title   = translate(title)
-        fa_summary = translate(article["summary"])
-        analysis   = get_ai_analysis(title, article["summary"])
+    sent = 0
+    for i, article in enumerate(to_post):
+        fa_title   = translated[i * 2]
+        fa_summary = translated[i * 2 + 1]
+        analysis   = get_ai_analysis(article["title"], article["summary"])
 
         if not fa_title:
-            print("⚠️ Skipping — translation failed")
+            print(f"⚠️ Skipping — translation failed")
             continue
 
         message   = build_message(article, fa_title, fa_summary, analysis, prices)
-        image_url = get_image_url(title, article["summary"])
-
-        # Try sending with image first (caption limit 1024 chars)
+        image_url = get_image_url(article["title"], article["summary"])
         caption   = truncate(message, 1020)
         success   = send_photo(image_url, caption)
-
-        # Fallback to text only
         if not success:
-            print("📷 Image failed, sending text only")
             success = send_message(message)
-
         if success:
-            posted.add(url)
+            posted.add(article["url"])
             sent += 1
             time.sleep(3)
 
     save_posted(posted)
     print(f"✅ Done — {sent} new articles posted.")
-
-if __name__ == "__main__":
-    main()
