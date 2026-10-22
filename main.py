@@ -346,7 +346,7 @@ def translate(text):
     for attempt in range(3):
         try:
             time.sleep(4)
-            result = MyMemoryTranslator(source='en', target='fa').translate(protected)
+            result = MyMemoryTranslator(source='en', target='fa-IR').translate(protected)
             if result:
                 return restore_terms(result, placeholders).strip()
         except Exception as e:
