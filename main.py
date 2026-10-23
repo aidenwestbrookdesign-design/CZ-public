@@ -5,7 +5,7 @@ import re
 import random
 import feedparser
 import requests
-from deep_translator import GoogleTranslator, MyMemoryTranslator
+from deep_translator import GoogleTranslator
 from datetime import datetime, timezone
 
 # ===== Config =====
@@ -69,44 +69,47 @@ TAG_MAP = {
     "crash":          ["#نزولی", "#سقوط", "#کریپتو", "#بازار"],
 }
 
-# ===== News Category Images =====
 NEWS_IMAGES = {
     "bitcoin": [
         "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&q=80&fit=crop",
+        "https://images.unsplash.com/photo-1516245834210-c4c142787335?w=800&q=80&fit=crop",
+        "https://images.unsplash.com/photo-1605792657660-596af9009e82?w=800&q=80&fit=crop",
     ],
     "ethereum": [
         "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&q=80&fit=crop",
-        "https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=800&q=80&fit=crop",
+        "https://images.unsplash.com/photo-1642790551116-18e4f97a7f33?w=800&q=80&fit=crop",
+        "https://images.unsplash.com/photo-1516245834210-c4c142787335?w=800&q=80&fit=crop",
     ],
     "hack": [
         "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80&fit=crop",
+        "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&q=80&fit=crop",
     ],
     "regulation": [
         "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1521791055366-0d553872952f?w=800&q=80&fit=crop",
+        "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80&fit=crop",
     ],
     "etf": [
         "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80&fit=crop",
+        "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&q=80&fit=crop",
     ],
     "bullish": [
         "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1569025690938-a00729c9e1f9?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1642790551116-18e4f97a7f33?w=800&q=80&fit=crop",
+        "https://images.unsplash.com/photo-1559526324-593bc073d938?w=800&q=80&fit=crop",
     ],
     "bearish": [
         "https://images.unsplash.com/photo-1535320903710-d993d3d77d29?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80&fit=crop",
-    ],
-    "defi": [
-        "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&q=80&fit=crop",
-        "https://images.unsplash.com/photo-1642790551116-18e4f97a7f33?w=800&q=80&fit=crop",
+        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80&fit=crop",
     ],
     "general": [
         "https://images.unsplash.com/photo-1642790551116-18e4f97a7f33?w=800&q=80&fit=crop",
@@ -114,10 +117,11 @@ NEWS_IMAGES = {
         "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80&fit=crop",
         "https://images.unsplash.com/photo-1559526324-593bc073d938?w=800&q=80&fit=crop",
+        "https://images.unsplash.com/photo-1569025690938-a00729c9e1f9?w=800&q=80&fit=crop",
+        "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=800&q=80&fit=crop",
     ],
 }
 
-# ===== Terms to protect from translation =====
 PRESERVE_TERMS = sorted([
     "BlackRock", "MicroStrategy", "Coinbase", "Grayscale", "Binance", "Tether",
     "Ripple Labs", "Circle", "Kraken", "Gemini", "PayPal", "Fidelity",
@@ -133,10 +137,6 @@ PRESERVE_TERMS = sorted([
     "MACD", "RSI", "ATH", "ATL",
 ], key=len, reverse=True)
 
-POSTED_FILE = "posted_urls.json"
-MAX_SUMMARY_LENGTH = 200
-
-# ===== Analysis Phrase Banks =====
 TOPIC_PHRASES = {
     "etf_approval": [
         "تأیید ETF می‌تواند موج جدیدی از سرمایه‌گذاری نهادی را وارد بازار کند.",
@@ -232,8 +232,9 @@ DIRECTION_NEUTRAL = [
     "تحلیلگران دیدگاه‌های متفاوتی دارند و باید داده‌های بیشتری منتظر ماند.",
 ]
 
+POSTED_FILE = "posted_urls.json"
+MAX_SUMMARY_LENGTH = 200
 
-# ===== Helpers =====
 
 def clean_html(text):
     text = re.sub(r"<[^>]+>", "", text or "")
@@ -244,7 +245,7 @@ def clean_html(text):
 def truncate(text, max_len):
     if len(text) <= max_len:
         return text
-    return text[:max_len].rsplit(" ", 1)[0] + "…"
+    return text[:max_len].rsplit(" ", 1)[0] + "..."
 
 def is_important(title):
     title_lower = title.lower()
@@ -294,8 +295,6 @@ def get_tags(title, summary=""):
             collected.append(fallback)
     return collected[:5]
 
-# ===== Image Picker =====
-
 def get_image_url(title, summary):
     text = (title + " " + summary).lower()
     if "hack" in text or "exploit" in text or "stolen" in text or "breach" in text:
@@ -308,16 +307,12 @@ def get_image_url(title, summary):
         return random.choice(NEWS_IMAGES["bitcoin"])
     elif "ethereum" in text or "eth" in text:
         return random.choice(NEWS_IMAGES["ethereum"])
-    elif "defi" in text or "nft" in text or "web3" in text:
-        return random.choice(NEWS_IMAGES["defi"])
     elif any(w in text for w in BULLISH_WORDS):
         return random.choice(NEWS_IMAGES["bullish"])
     elif any(w in text for w in BEARISH_WORDS):
         return random.choice(NEWS_IMAGES["bearish"])
     else:
         return random.choice(NEWS_IMAGES["general"])
-
-# ===== Translation =====
 
 def protect_terms(text):
     placeholders = {}
@@ -336,27 +331,11 @@ def restore_terms(text, placeholders):
         text = text.replace(placeholder, original)
     return text
 
-def translate(text):
-    if not text:
-        return ""
-    text = truncate(text, 400)
-    protected, placeholders = protect_terms(text)
-    for attempt in range(3):
-        try:
-            time.sleep(8)
-            result = GoogleTranslator(source='auto', target='fa').translate(protected)
-            if result:
-                return restore_terms(result, placeholders).strip()
-        except Exception as e:
-            print(f"Translation attempt {attempt+1} failed:", e)
-            time.sleep(15)
-    return ""
-
 def translate_batch(texts):
-    """Translate all texts in ONE API call instead of many."""
     if not texts:
         return []
-    protected_list, placeholder_list = [], []
+    protected_list = []
+    placeholder_list = []
     for text in texts:
         text = truncate(text or "", 400)
         p, ph = protect_terms(text)
@@ -372,22 +351,8 @@ def translate_batch(texts):
             ]
         except Exception as e:
             print(f"Batch translation attempt {attempt+1} failed:", e)
-            time.sleep(15)
+            time.sleep(20)
     return [""] * len(texts)
-    # Fallback to Google
-    for attempt in range(2):
-        try:
-            time.sleep(6)
-            result = GoogleTranslator(source='en', target='fa').translate(protected)
-            if result:
-                return restore_terms(result, placeholders).strip()
-        except Exception as e:
-            print(f"Google attempt {attempt+1} failed:", e)
-            time.sleep(6)
-
-    return ""
-
-# ===== Analysis =====
 
 def get_ai_analysis(title, summary):
     text = (title + " " + summary).lower()
@@ -422,8 +387,6 @@ def get_ai_analysis(title, summary):
 
     return f"{topic} {direction}"
 
-# ===== Prices =====
-
 def get_prices():
     try:
         r = requests.get(
@@ -444,16 +407,10 @@ def get_prices():
     except:
         return None
 
-# ===== Telegram =====
-
 def send_photo(image_url, caption):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
-    payload = {
-        "chat_id":    TELEGRAM_CHANNEL_ID,
-        "photo":      image_url,
-        "caption":    caption,
-        "parse_mode": "HTML",
-    }
+    payload = {"chat_id": TELEGRAM_CHANNEL_ID, "photo": image_url,
+                "caption": caption, "parse_mode": "HTML"}
     try:
         r = requests.post(url, data=payload, timeout=15)
         return r.status_code == 200
@@ -462,12 +419,8 @@ def send_photo(image_url, caption):
 
 def send_message(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {
-        "chat_id":              TELEGRAM_CHANNEL_ID,
-        "text":                 message,
-        "parse_mode":           "HTML",
-        "disable_web_page_preview": True,
-    }
+    payload = {"chat_id": TELEGRAM_CHANNEL_ID, "text": message,
+                "parse_mode": "HTML", "disable_web_page_preview": True}
     for attempt in range(3):
         try:
             r = requests.post(url, data=payload, timeout=10)
@@ -478,8 +431,6 @@ def send_message(message):
         time.sleep(2)
     return False
 
-# ===== Persistence =====
-
 def load_posted():
     if os.path.exists(POSTED_FILE):
         with open(POSTED_FILE, "r") as f:
@@ -489,8 +440,6 @@ def load_posted():
 def save_posted(posted):
     with open(POSTED_FILE, "w") as f:
         json.dump(list(posted)[-1000:], f)
-
-# ===== Fetch News =====
 
 def fetch_news():
     articles = []
@@ -511,8 +460,6 @@ def fetch_news():
         except Exception as e:
             print(f"RSS fetch error ({source_name}):", e)
     return articles
-
-# ===== Format Message =====
 
 def build_message(article, fa_title, fa_summary, analysis, prices):
     tags      = get_tags(article["title"], article["summary"])
@@ -541,8 +488,6 @@ def build_message(article, fa_title, fa_summary, analysis, prices):
     ]
     return "\n".join(line for line in lines if line is not None)
 
-# ===== Main =====
-
 def main():
     now = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
     print(f"🚀 Bot started — {now}")
@@ -554,8 +499,7 @@ def main():
 
     articles.sort(key=lambda a: score_article(a["title"]), reverse=True)
 
-    sent = 0
-        # Pick top articles first
+    # Pick top articles first
     to_post = []
     for article in articles:
         if len(to_post) >= MAX_POSTS_PER_RUN:
@@ -564,9 +508,11 @@ def main():
             to_post.append(article)
 
     if not to_post:
-        print("✅ Done — 0 new articles posted.")
+        print("✅ Done — 0 new articles to post.")
         save_posted(posted)
         return
+
+    print(f"📌 Translating {len(to_post)} articles in one batch...")
 
     # Batch translate everything in ONE call
     all_texts = []
@@ -590,6 +536,7 @@ def main():
         caption   = truncate(message, 1020)
         success   = send_photo(image_url, caption)
         if not success:
+            print("📷 Image failed, sending text only")
             success = send_message(message)
         if success:
             posted.add(article["url"])
@@ -598,3 +545,6 @@ def main():
 
     save_posted(posted)
     print(f"✅ Done — {sent} new articles posted.")
+
+if __name__ == "__main__":
+    main()
