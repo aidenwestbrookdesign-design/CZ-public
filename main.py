@@ -5,7 +5,6 @@ import re
 import random
 import feedparser
 import requests
-from deep_translator import GoogleTranslator
 from datetime import datetime, timezone
 
 # ===== Config =====
