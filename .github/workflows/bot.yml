@@ -18,8 +18,7 @@ jobs:
         with:
           python-version: '3.11'
 
-      - run: pip install feedparser deep-translator requests
-
+      - run: pip install feedparser requests
       - run: python main.py
         timeout-minutes: 10
         env:
