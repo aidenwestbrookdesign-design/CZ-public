@@ -331,28 +331,35 @@ def restore_terms(text, placeholders):
         text = text.replace(placeholder, original)
     return text
 
-def translate_batch(texts):
-    if not texts:
-        return []
-    protected_list = []
-    placeholder_list = []
-    for text in texts:
-        text = truncate(text or "", 400)
-        p, ph = protect_terms(text)
-        protected_list.append(p)
-        placeholder_list.append(ph)
+def translate_text(text):
+    if not text:
+        return ""
+    text = truncate(text, 400)
+    protected, placeholders = protect_terms(text)
     for attempt in range(3):
         try:
-            time.sleep(5)
-            results = GoogleTranslator(source='auto', target='fa').translate_batch(protected_list)
-            return [
-                restore_terms(r, ph).strip() if r else ""
-                for r, ph in zip(results, placeholder_list)
-            ]
+            time.sleep(2)
+            r = requests.get(
+                "https://api.mymemory.translated.net/get",
+                params={"q": protected, "langpair": "en|fa"},
+                timeout=15
+            )
+            data = r.json()
+            if data.get("responseStatus") == 200:
+                result = data["responseData"]["translatedText"]
+                return restore_terms(result, placeholders).strip()
+            else:
+                print(f"MyMemory error: {data.get('responseDetails', '')}")
         except Exception as e:
-            print(f"Batch translation attempt {attempt+1} failed:", e)
-            time.sleep(20)
-    return [""] * len(texts)
+            print(f"Translation attempt {attempt+1} failed:", e)
+            time.sleep(5)
+    return ""
+
+def translate_batch(texts):
+    results = []
+    for text in texts:
+        results.append(translate_text(text))
+    return results
 
 def get_ai_analysis(title, summary):
     text = (title + " " + summary).lower()
